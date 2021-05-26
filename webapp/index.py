@@ -3,6 +3,7 @@ from datetime import datetime
 from random import *
 import os
 import glob
+import time
 import threading
 
 import arduino as ard
@@ -20,9 +21,9 @@ coord = {
     'movex1':0, 'movey1':0,
     'movex2':0, 'movey2':0,
     'movex3':0, 'movey3':0,
-    'offsetx1':10, 'offsety1':205,
-    'offsetx2':78, 'offsety2':145,
-    'offsetx3':10, 'offsety3':105,
+    'offsetx1':-170, 'offsety1':130,
+    'offsetx2':-50, 'offsety2':40,
+    'offsetx3':-160, 'offsety3':40,
     'laser1':19952,
     'laser2':19952,
     'laser3':19952,
@@ -57,6 +58,7 @@ def index():
 @app.route('/hwreset')
 def hwreset():
     ard.power_reset()
+    time.sleep(1)
     initialization()
     return redirect(url_for('index'))
 
@@ -74,15 +76,15 @@ def laser(data):
 
 @app.route('/random')
 def random():
-    coord['movex1'] = randint(-X0, X0)
-    coord['movey1'] = randint(-Y0, Y0)
-    coord['movex2'] = randint(-X0, X0)
-    coord['movey2'] = randint(-Y0, Y0)
-    coord['movex3'] = randint(-X0, X0)
-    coord['movey3'] = randint(-Y0, Y0)
-    coord['laser1'] = int(((coord['movex1'] + X0) + ((0.2*X0-1) * ((Y0-10) - coord['movey1'])))/10)
-    coord['laser2'] = int(((coord['movex2'] + X0) + ((0.2*X0-1) * ((Y0-10) - coord['movey2'])))/10)
-    coord['laser3'] = int(((coord['movex3'] + X0) + ((0.2*X0-1) * ((Y0-10) - coord['movey3'])))/10)
+    coord['laser1'] = round(randint(1, 39903), -1)
+    coord['laser2'] = round(randint(1, 39903), -1)
+    coord['laser3'] = round(randint(1, 39903), -1)
+    coord['movex1'] = 10 * ((coord['laser1']-1) % (X0*2/10-1) + 1 - (X0/10))
+    coord['movey1'] = (Y0 - 10) - 10*((coord['laser1']-1) // (X0*2/10-1))
+    coord['movex2'] = 10 * ((coord['laser2']-1) % (X0*2/10-1) + 1 - (X0/10))
+    coord['movey2'] = (Y0 - 10) - 10*((coord['laser2']-1) // (X0*2/10-1))
+    coord['movex3'] = 10 * ((coord['laser3']-1) % (X0*2/10-1) + 1 - (X0/10))
+    coord['movey3'] = (Y0 - 10) - 10*((coord['laser3']-1) // (X0*2/10-1))
 
     return redirect(url_for('index'))
 
@@ -92,23 +94,19 @@ def move():
         coord['laser1'] = int(request.form['laser1'])
         coord['movex1'] = int(float(request.form['moveX1']) * 10)
         coord['movey1'] = int(float(request.form['moveY1']) * 10)
-        ard.motor_on(0)
         ard.laser_move(0, coord['movex1'], coord['movey1'])
-        ard.laser_on(0)
         
         coord['laser2'] = int(request.form['laser2'])
         coord['movex2'] = int(float(request.form['moveX2']) * 10)
         coord['movey2'] = int(float(request.form['moveY2']) * 10)
-        ard.motor_on(1)
         ard.laser_move(1, coord['movex2'], coord['movey2'])
-        ard.laser_on(1)
         
         coord['laser3'] = int(request.form['laser3'])
         coord['movex3'] = int(float(request.form['moveX3']) * 10)
         coord['movey3'] = int(float(request.form['moveY3']) * 10)
-        ard.motor_on(2)
         ard.laser_move(2, coord['movex3'], coord['movey3'])
-        ard.laser_on(2)
+
+        correct()
     
     return redirect(url_for('index'))
 
@@ -185,7 +183,8 @@ def deletefile():
 def poweroff(data):
     ard.power_off()
     if data == 0:
-        os.system('shutdown -h now')
+        t = threading.Thread(target=threadPoweroff)
+        t.start()
     elif data == 1:
         os.system('reboot')
     return redirect(url_for('index'))
@@ -210,10 +209,9 @@ def initialization():
     ard.laser_offset(0, coord['offsetx1'], coord['offsety1'])
     ard.laser_offset(1, coord['offsetx2'], coord['offsety2'])
     ard.laser_offset(2, coord['offsetx3'], coord['offsety3'])
-    
-    ard.laser_off(0)
-    ard.laser_off(1)
-    ard.laser_off(2)
+
+    t = threading.Thread(target=threadMotorLaserOff)
+    t.start()
 
 def getFilenames():
     filepaths = glob.glob(RESOURCE_PATH+'*.csv')
@@ -228,6 +226,30 @@ def threadCamera():
     os.system('python3 ' + CAMERA_PATH)
     print('thread stop')
 
+def threadPoweroff():
+    os.system('shutdown -h now')
+
+def threadMotorLaserOff():
+    time.sleep(4)
+
+    ard.motor_off(0)
+    ard.motor_off(1)
+    ard.motor_off(2)
+    
+    ard.laser_off(0)
+    ard.laser_off(1)
+    ard.laser_off(2)
+
+def correct():
+    time.sleep(2)
+    ard.motor_off(0)
+    ard.motor_off(1)
+    ard.motor_off(2)
+
 if __name__ == '__main__':
+    ard.power_off()
+    time.sleep(1)
+    ard.power_on()
+    time.sleep(1)
     initialization()
     app.run(debug=True, port=80, host='0.0.0.0')

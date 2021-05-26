@@ -35,22 +35,22 @@
                 <br>
                 <form action="/move" method="POST">
                     Laser 1:
-                    <input type="number" name="moveX1" id="moveX1" min="-142" max="142" step="0.1" style="height:20px;width:60px"/>
-                    <input type="number" name="moveY1" id="moveY1" min="-71" max="71" step="0.1" style="height:20px;width:60px"/>
-                    &#8594;
-                    <input type="number" name="laser1" id="laser1" min="1" max="39903" step="1" style="height:20px;width:60px"/>
+                    <input type="number" name="moveX1" id="moveX1" min="-142" max="142" step="0.1" style="height:20px;width:60px;display:none"/>
+                    <input type="number" name="moveY1" id="moveY1" min="-71" max="71" step="0.1" style="height:20px;width:60px;display:none"/>
+                    <!-- &#8594; -->
+                    <input type="number" name="laser1" id="laser1" min="1" max="39903" step="1" style="height:20px;width:60px" onchange="onChangeLaser1(this.value)"/>
                     <br>
                     Laser 2:
-                    <input type="number" name="moveX2" id="moveX2" min="-142" max="142" step="0.1" style="height:20px;width:60px"/>
-                    <input type="number" name="moveY2" id="moveY2" min="-71" max="71" step="0.1" style="height:20px;width:60px"/>
-                    &#8594;
-                    <input type="number" name="laser2" id="laser2" min="1" max="39903" step="1" style="height:20px;width:60px"/>
+                    <input type="number" name="moveX2" id="moveX2" min="-142" max="142" step="0.1" style="height:20px;width:60px;display:none"/>
+                    <input type="number" name="moveY2" id="moveY2" min="-71" max="71" step="0.1" style="height:20px;width:60px;display:none"/>
+                    <!-- &#8594; -->
+                    <input type="number" name="laser2" id="laser2" min="1" max="39903" step="1" style="height:20px;width:60px" onchange="onChangeLaser2(this.value)"/>
                     <br>
                     Laser 3:
-                    <input type="number" name="moveX3" id="moveX3" min="-142" max="142" step="0.1" style="height:20px;width:60px"/>
-                    <input type="number" name="moveY3" id="moveY3" min="-71" max="71" step="0.1" style="height:20px;width:60px"/>
-                    &#8594;
-                    <input type="number" name="laser3" id="laser3" min="1" max="39903" step="1" style="height:20px;width:60px"/>
+                    <input type="number" name="moveX3" id="moveX3" min="-142" max="142" step="0.1" style="height:20px;width:60px;display:none"/>
+                    <input type="number" name="moveY3" id="moveY3" min="-71" max="71" step="0.1" style="height:20px;width:60px;display:none"/>
+                    <!-- &#8594; -->
+                    <input type="number" name="laser3" id="laser3" min="1" max="39903" step="1" style="height:20px;width:60px" onchange="onChangeLaser3(this.value)"/>
                     <br>
                     <input type="submit" value="Apply" style="height:40px;width:100px"/>
                 </form>
@@ -94,12 +94,12 @@
                             <td>{{ _records[record][7] }}</td>
                             <td>{{ _records[record][8] }}</td>
 <!-- for debugging -->
-                            <td>{{ _records[record][0] }}</td>
+                            <!-- <td>{{ _records[record][0] }}</td>
                             <td>{{ _records[record][1] }}</td>
                             <td>{{ _records[record][2] }}</td>
                             <td>{{ _records[record][3] }}</td>
                             <td>{{ _records[record][4] }}</td>
-                            <td>{{ _records[record][5] }}</td>
+                            <td>{{ _records[record][5] }}</td> -->
 <!-- for debugging -->
                         </tr>
                     {% endfor %}
@@ -122,6 +122,26 @@
             </p>
         </div>
     </body>
+    <script>
+        function onChangeLaser1(value) {
+            x = 10 * ((value - 1) % (1420*2/10-1) + 1 - (1420/10));
+            y = (710 - 10) - 10*parseInt((value-1) / (1420*2/10-1))
+            document.getElementById("moveX1").setAttribute('value', x/10);
+            document.getElementById("moveY1").setAttribute('value', y/10);
+        }
+        function onChangeLaser2(value) {
+            x = 10 * ((value - 1) % (1420*2/10-1) + 1 - (1420/10));
+            y = (710 - 10) - 10*parseInt((value-1) / (1420*2/10-1))
+            document.getElementById("moveX2").setAttribute('value', x/10);
+            document.getElementById("moveY2").setAttribute('value', y/10);
+        }
+        function onChangeLaser3(value) {
+            x = 10 * ((value - 1) % (1420*2/10-1) + 1 - (1420/10));
+            y = (710 - 10) - 10*parseInt((value-1) / (1420*2/10-1))
+            document.getElementById("moveX3").setAttribute('value', x/10);
+            document.getElementById("moveY3").setAttribute('value', y/10);
+        }
+    </script>
     <script type="text/javascript">
         document.getElementById("moveX1").setAttribute('value', {{ _coord.movex1/10 }});
         document.getElementById("moveX2").setAttribute('value', {{ _coord.movex2/10 }});
