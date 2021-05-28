@@ -44,7 +44,6 @@ def variables_setting():
     vs.set(3, 1920)
     vs.set(4, 1080)
 
-
     global t0, current_t, rest_time, initialization_time, noise_time, FPS_INTERVAL, frame_count, fps_time, tl, tr, bl, br
     global a, a_r, result_array, b, b2, b3, b4, b_r, b2_r, b3_r, b4_r
     # Time
@@ -111,14 +110,12 @@ def variables_setting():
     hand_filter_time = 0
     time_count = 0
 
-
 def error_check(past, new, range):
     if abs(new - past) - range > 0:
         value = 0
     else:
         value = 1
     return value
-
 
 def real_coordinate_x(value, center, max, min, real_length):
      output_val = (value - center) * real_length / (max - min)

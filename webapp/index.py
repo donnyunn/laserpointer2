@@ -23,7 +23,7 @@ coord = {
     'movex3':0, 'movey3':0,
     'offsetx1':-170, 'offsety1':130,
     'offsetx2':-50, 'offsety2':40,
-    'offsetx3':-160, 'offsety3':40,
+    'offsetx3':360, 'offsety3':430,
     'laser1':19952,
     'laser2':19952,
     'laser3':19952,
