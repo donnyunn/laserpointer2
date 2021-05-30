@@ -106,7 +106,7 @@ def getMatrix2(laserNum, m):
         
         cam_n.append(cam)
         las_n.append(las)
-    a = getArray(laserNum, cam_n, las_n, m, m-1, m+16, m+17)
+    a = getArray(laserNum, cam_n, las_n, m, m-1, m+6, m+7)
     return Coefficients(a)
     # print("\n\t    A = %f\n\t    B = %f\n\t    C = %f\n\t    D = %f\n\t    E = %f\n\t    F = %f\n\t    G = %f\n\t    H = %f\n"%(Coefficients(a)))
     
