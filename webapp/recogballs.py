@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import pandas as pd
 import recogplay as rp
+import time
 
 X0 = 284.0
 Y0 = 142.0
@@ -162,7 +163,6 @@ def loop():
         # setPoint(frame, yellowpoint)
         # setPoint(frame, redpoint)
         # cv2.imshow('frame', frame)
-
         # if cv2.waitKey(1) == 27:
         #     break
         # time.sleep(1)
