@@ -26,9 +26,9 @@ coord = {
     'movex1':0, 'movey1':0,
     'movex2':0, 'movey2':0,
     'movex3':0, 'movey3':0,
-    'offsetx1':10, 'offsety1':180,
-    'offsetx2':130, 'offsety2':130,
-    'offsetx3':360, 'offsety3':500,
+    'offsetx1':60, 'offsety1':265,
+    'offsetx2':180, 'offsety2':155,
+    'offsetx3':-130, 'offsety3':0,
     'laser1':19952,
     'laser2':19952,
     'laser3':19952,
@@ -59,6 +59,8 @@ bl.append(ini_data[0][2])
 bl.append(ini_data[0][1])
 center = (int((bl[0]+tr[0])/2) , int((bl[1]+tr[1])/2))
 
+correction_flag = False
+
 @app.route('/')
 def index():
     return render_template('index.html', \
@@ -72,8 +74,11 @@ def index():
 
 @app.route('/hwreset')
 def hwreset():
+    global correction_flag
+    correction_flag = False
     ard.power_reset()
     time.sleep(1)
+    correction_flag = True
     initialization()
     return redirect(url_for('index'))
 
@@ -105,24 +110,39 @@ def random():
 
 @app.route('/move', methods = ['POST'])
 def move():
+    global correction_flag
     if request.method == 'POST':
         coord['laser1'] = int(request.form['laser1'])
         coord['movex1'] = int(float(request.form['moveX1']) * 10)
         coord['movey1'] = int(float(request.form['moveY1']) * 10)
-        x, y = transCoord1(coord['movex1'], coord['movey1'])
+        # x, y = transCoord1(coord['movex1'], coord['movey1'])
+        x, y = coord['movex1'], coord['movey1']
         ard.laser_move(0, x, y)
+        laser0 = (x, y)
         
         coord['laser2'] = int(request.form['laser2'])
         coord['movex2'] = int(float(request.form['moveX2']) * 10)
         coord['movey2'] = int(float(request.form['moveY2']) * 10)
-        ard.laser_move(1, coord['movex2'], coord['movey2'])
+        # x, y = transCoord2(coord['movex2'], coord['movey2'])
+        x, y = coord['movex2'], coord['movey2']
+        ard.laser_move(1, x, y)
+        laser1 = (x, y)
         
         coord['laser3'] = int(request.form['laser3'])
         coord['movex3'] = int(float(request.form['moveX3']) * 10)
         coord['movey3'] = int(float(request.form['moveY3']) * 10)
-        ard.laser_move(2, coord['movex3'], coord['movey3'])
+        # x, y = transCoord3(coord['movex3'], coord['movey3'])
+        x, y = coord['movex3'], coord['movey3']
+        ard.laser_move(2, x, y)
+        laser2 = (x, y)
 
-        correct()
+        correction_flag = True
+        time.sleep(2)
+        correct((laser0, laser1, laser2))
+
+        ard.laser_on(0)
+        ard.laser_on(1)
+        ard.laser_on(2)
     
     return redirect(url_for('index'))
 
@@ -268,7 +288,134 @@ def white2laser1(x_camera, y_camera):
     
     return x_laser*10, y_laser*10
 
+def transCoord2(x_camera, y_camera):
+    x_laser, y_laser = yellow2laser2(x_camera/10, y_camera/10)
+    print(int(round(float(x_laser))), int(round(float(y_laser))))
+    return int(round(float(x_laser))), int(round(float(y_laser)))
+
+def yellow2laser2(x_camera, y_camera):
+    if (y_camera >= 35.0):
+        if (x_camera < -70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 1)
+        elif (x_camera < -35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 2)
+        elif (x_camera < 0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 3)
+        elif (x_camera < 35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 4)
+        elif (x_camera < 70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 5)
+        else:
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 6)
+    elif (y_camera >= 0):
+        if (x_camera < -70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 8)
+        elif (x_camera < -35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 9)
+        elif (x_camera < 0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 10)
+        elif (x_camera < 35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 11)
+        elif (x_camera < 70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 12)
+        else:
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 13)
+    elif (y_camera >= -35.0):
+        if (x_camera < -70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 15)
+        elif (x_camera < -35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 16)
+        elif (x_camera < 0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 17)
+        elif (x_camera < 35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 18)
+        elif (x_camera < 70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 19)
+        else:
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 20)
+    else:
+        if (x_camera < -70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 22)
+        elif (x_camera < -35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 23)
+        elif (x_camera < 0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 24)
+        elif (x_camera < 35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 25)
+        elif (x_camera < 70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 26)
+        else:
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 27)
+    x_laser = ((A*x_camera) + (B*y_camera) + C) / ((G*x_camera) + (H*y_camera) + 1)
+    y_laser = ((D*x_camera) + (E*y_camera) + F) / ((G*x_camera) + (H*y_camera) + 1)
+    
+    return x_laser*10, y_laser*10
+
+def transCoord3(x_camera, y_camera):
+    x_laser, y_laser = red2laser3(x_camera/10, y_camera/10)
+    print(int(round(float(x_laser))), int(round(float(y_laser))))
+    return int(round(float(x_laser))), int(round(float(y_laser)))
+
+def red2laser3(x_camera, y_camera):
+    if (y_camera >= 35.0):
+        if (x_camera < -70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 1)
+        elif (x_camera < -35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 2)
+        elif (x_camera < 0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 3)
+        elif (x_camera < 35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 4)
+        elif (x_camera < 70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 5)
+        else:
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 6)
+    elif (y_camera >= 0):
+        if (x_camera < -70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 8)
+        elif (x_camera < -35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 9)
+        elif (x_camera < 0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 10)
+        elif (x_camera < 35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 11)
+        elif (x_camera < 70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 12)
+        else:
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 13)
+    elif (y_camera >= -35.0):
+        if (x_camera < -70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 15)
+        elif (x_camera < -35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 16)
+        elif (x_camera < 0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 17)
+        elif (x_camera < 35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 18)
+        elif (x_camera < 70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 19)
+        else:
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 20)
+    else:
+        if (x_camera < -70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 22)
+        elif (x_camera < -35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 23)
+        elif (x_camera < 0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 24)
+        elif (x_camera < 35.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 25)
+        elif (x_camera < 70.0):
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 26)
+        else:
+            A, B, C, D, E, F, G, H = pg.getMatrix2(0, 27)
+    x_laser = ((A*x_camera) + (B*y_camera) + C) / ((G*x_camera) + (H*y_camera) + 1)
+    y_laser = ((D*x_camera) + (E*y_camera) + F) / ((G*x_camera) + (H*y_camera) + 1)
+    
+    return x_laser*10, y_laser*10
+
 def initialization():
+    global correction_flag
     ard.power_on()
     f = open(RESOURCE_PATH + HW_SETUP, 'r')
     lines = f.readlines()
@@ -285,9 +432,17 @@ def initialization():
     ard.motor_on(1)
     ard.motor_on(2)
 
+    ard.laser_move(0, 0, 0)
+    ard.laser_move(1, 0, 0)
+    ard.laser_move(2, 0, 0)
+
     ard.laser_offset(0, coord['offsetx1'], coord['offsety1'])
     ard.laser_offset(1, coord['offsetx2'], coord['offsety2'])
     ard.laser_offset(2, coord['offsetx3'], coord['offsety3'])
+
+    time.sleep(1)
+    # correction_flag = True
+    correct(((0,0),(0,0),(0,0)))
 
     t = threading.Thread(target=threadMotorLaserOff)
     t.start()
@@ -301,6 +456,21 @@ def getFilenames():
     filenames.sort(reverse=True)
     return filenames
 
+def tfCoord(xy, topright, botleft, origin):
+    x = xy[0]
+    y = xy[1]
+    xr = (x - origin[0]) * 2840 / (topright[0] - botleft[0])
+    yr = (y - origin[1]) * 1420 / (topright[1] - botleft[1])
+    return (round(xr, 1), round(yr, 1))
+def itfCoord(xy, topright, botleft, origin):
+    XRATIO = 0.98
+    YRATIO = 0.99
+    xr = xy[0]
+    yr = xy[1]
+    x = xr * (topright[0] - botleft[0]) / 2840 + origin[0]
+    y = yr * (topright[1] - botleft[1]) / 1420 + origin[1]
+    return (int(round((x-origin[0])*XRATIO+origin[0])), int(round((y-origin[1])*YRATIO+origin[1])))
+
 def threadCamera():
     os.system('python3 ' + CAMERA_PATH)
     print('thread stop')
@@ -309,7 +479,7 @@ def threadPoweroff():
     os.system('shutdown -h now')
 
 def threadMotorLaserOff():
-    time.sleep(4)
+    time.sleep(0.1)
 
     ard.motor_off(0)
     ard.motor_off(1)
@@ -320,11 +490,23 @@ def threadMotorLaserOff():
     ard.laser_off(2)
     print("off")
 
-def recognize_laser(n, frame):
+def recognize_laser(n, vs, target):
+    global frame
     result = (0, 0)
-    ard.laser_on(n)
-    lower_laser = np.array([38, 16, 64])
+    lower_laser = np.array([35, 1, 64])
     upper_laser = np.array([90, 255, 255])
+
+    ard.laser_on(n)
+    ret, frame = vs.read()
+    # ard.laser_off(n)
+    if not ret:
+        # ard.laser_off(n)
+        return ret, result
+    
+    ret, frame = vs.read()
+    if not ret:
+        return ret, result
+
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     laser_range = cv2.inRange(hsv, lower_laser, upper_laser)
     laser = cv2.bitwise_and(frame, frame, mask=laser_range)
@@ -332,52 +514,167 @@ def recognize_laser(n, frame):
     rgblaser = cv2.cvtColor(thrlaser, cv2.COLOR_HSV2RGB)
     graylaser = cv2.cvtColor(rgblaser, cv2.COLOR_RGB2GRAY)
     contours, _ = cv2.findContours(graylaser, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    ret = False
     for cont in contours:
         approx = cv2.approxPolyDP(cont, cv2.arcLength(cont, True) * 0.02, True)
         if len(approx) > 5:
             area = cv2.contourArea(cont)
             if area != 0:
                 _, radius = cv2.minEnclosingCircle(cont)
-                if radius > 5 and radius < 25:
+                if radius > 1.8 and radius < 5:
                     ratio = radius * radius * math.pi / area
-                    if int(ratio) == 1:
-                        print(radius, ratio)
+                    if int(ratio) < 3:
                         (x, y, w, h) = cv2.boundingRect(cont)
-                        pt1 = (x, y)
-                        pt2 = (x + w, y + h)
-                        cv2.rectangle(laser, pt1, pt2, (0, 0, 255), 2)
                         result = (int((x+x+w)/2), int((y+y+h)/2))
-    
-    cv2.imshow("Frame", laser)
-    return result
+                        if result[0] > bl[0]-10 and result[0] < tr[0]+10 and result[1] > tr[1]-10 and result[1] < bl[1]+10:
+                            # print("radius(%f)"%radius)
+                            # print("ratio(%f)"%ratio)
+                            # print(radius, ratio)
+                            # result = (int((x+x+w)/2), int((y+y+h)/2))
+                            ret = True
 
-def correct():
-    vs = cv2.VideoCapture(-1)
-    vs.set(3, 1920)
-    vs.set(4, 1080)
+                            # pt1 = (x-10, y-10)
+                            # pt2 = (x + w+10, y + h + 10)
+                            # cv2.rectangle(laser, pt1, pt2, (0, 0, 255), 1)
 
-    while True:
-        ret, frame = vs.read()
-        if not ret:
-            print(ret)
-            break
-        laser0 = recognize_laser(0, frame)
-        print(laser0)
-        # cv2.imshow("Frame", frame)
-        if cv2.waitKey(1) == 27:
-            break;
-    
-    ard.motor_off(0)
-    ard.motor_off(1)
-    ard.motor_off(2)
+                            break
+    # pt1 = (tr[0], tr[1])
+    # pt2 = (bl[0], bl[1])
+    # cv2.rectangle(laser, pt1, pt2, (0, 255, 0), 2)
+    # cv2.circle(laser, center, 1, (255, 255, 255), -1)
+    # cv2.circle(laser, result, 1, (0, 0, 255), -1)
+    # cv2.circle(laser, target, 3, (0, 255, 255), -1)
+    # cv2.imshow("Frame", laser)
+    ret, frame = vs.read()
+    if not ret:
+        return ret, result
+
+    return ret, result
+
+def correct(laser_req):
+    global correction_flag
+    # print(laser_req)
+    # return
     ard.laser_off(0)
     ard.laser_off(1)
     ard.laser_off(2)
+    vs = cv2.VideoCapture(-1)
+    vs.set(3, 1920)
+    vs.set(4, 1080)
+    laser = (0, 0)
+
+    for n in range(3):
+        time.sleep(1)
+        retry = 0
+        xtick = 1
+        ytick = 1
+        xok = False
+        yok = False
+        target = itfCoord(laser_req[n], tr, bl, center)
+        while correction_flag:
+            # ret, frame = vs.read()
+            # if not ret:
+            #     print(ret)
+            #     break
+            # ard.laser_move(n, laser_req[n][0], laser_req[n][1])
+            # time.sleep(1)
+            
+            ret, laser = recognize_laser(n, vs, target)
+            if ret:
+                retry = 0
+                # x, y = tfCoord(laser, tr, bl, center)
+                # print(ret, n)
+                # print("required: (%d"%laser_req[n][0]+", %d"%laser_req[n][1]+")")
+                # print("corrected: (%d"%x+", %d"%y+")")
+                # x_err = int((laser_req[n][0]-x))
+                # y_err = int((laser_req[n][1]-y))
+                x_err = int(target[0] - laser[0])
+                y_err = int(target[1] - laser[1])
+                print(target)
+                print(laser)
+                print(x_err, y_err)
+                
+                if xok and yok:
+                    # print("required: (%d"%laser_req[n][0]+", %d"%laser_req[n][1]+")")
+                    # print("corrected: (%d"%x+", %d"%y+")")
+                    break
+                elif xok:
+                    if abs(y_err) < 4:
+                        if abs(x_err) >= 4:
+                            xok = False
+                        yok = True
+                    elif abs(y_err) > 25:
+                        if y_err > 0:
+                            ytick = -2
+                        else:
+                            ytick = 2
+                        ard.laser_tick(n, 0, ytick)  
+                    else:
+                        if y_err > 0:
+                            ytick = -1
+                        else:
+                            ytick = 1
+                        ard.laser_tick(n, 0, ytick)  
+                else:
+                    if abs(x_err) < 4:
+                        if abs(y_err) >= 4:
+                            yok = False
+                        xok = True
+                    elif abs(x_err) > 25:
+                        if x_err < 0:
+                            xtick = -2
+                        else:
+                            xtick = 2
+                        ard.laser_tick(n, xtick, 0)
+                    else:
+                        if x_err < 0:
+                            xtick = -1
+                        else:
+                            xtick = 1
+                        ard.laser_tick(n, xtick, 0)
+
+            else:
+                laser = (0, 0)
+                retry = retry + 1
+                x, y = (0, 0)
+                print(".")
+                if retry > 20:
+                    print("fail(%d)"%n)
+                    retry = 0
+                    break;
+            if cv2.waitKey(1) == 27:
+                break
+        ard.laser_off(n)
+
+    # while True:
+    #     # ret, frame = vs.read()
+    #     # if not ret:
+    #     #     print(ret)
+    #     #     break
+    #     ret, laser = recognize_laser(0, vs)
+    #     if ret:
+    #         x, y = tfCoord(laser, tr, bl, center)
+    #         print(x, y)
+    #     # cv2.imshow("Frame", frame)
+    #     if cv2.waitKey(1) == 27:
+    #         ard.laser_tick(0, -int(x/10), -int(y/10))
+    #         break;
+    
+    # ard.motor_off(0)
+    # ard.motor_off(1)
+    # ard.motor_off(2)
+    ard.laser_off(0)
+    ard.laser_off(1)
+    ard.laser_off(2)
+
+    correction_flag = False
 
     vs.release()
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
+    correction_flag = False
     ard.power_off()
     time.sleep(1)
     ard.power_on()

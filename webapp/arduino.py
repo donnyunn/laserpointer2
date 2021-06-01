@@ -59,6 +59,8 @@ def motor_off(num):
 
 def laser_move(num, x, y):
     tx = []
+    # x = int(x*0.9)
+    # y = int(y*0.9)
     tx.append(x>>8 & 0xff)
     tx.append(x & 0xff)
     tx.append(y>>8 & 0xff)
