@@ -31,6 +31,21 @@ def areDatumChanged(pts1, pts2, pts3):
     pointArray[2] = pts3
     return ret
 
+def areDatumVeryChanged(pts1, pts2, pts3):
+    global pointArray
+    ret = False
+
+    if abs(pointArray[0][0] - pts1[0]) > 10 or abs(pointArray[0][1] - pts1[1]) > 10:
+        ret = True
+    elif abs(pointArray[1][0] - pts2[0]) > 10 or abs(pointArray[1][1] - pts2[1]) > 10:
+        ret = True
+    elif abs(pointArray[2][0] - pts3[0]) > 10 or abs(pointArray[2][1] - pts3[1]) > 10:
+        ret = True
+    pointArray[0] = pts1
+    pointArray[1] = pts2
+    pointArray[2] = pts3
+    return ret
+
 def billiardRule(filename, pts1, pts2, pts3):
     global shotDetected, endDetected, game_num
     if shotDetected:
@@ -44,6 +59,6 @@ def billiardRule(filename, pts1, pts2, pts3):
             game_num = game_num + 1
             endDetected = False
         else:
-            if areDatumChanged(pts1, pts2, pts3):
+            if areDatumVeryChanged(pts1, pts2, pts3):
                 print("shot detected")
                 shotDetected = True

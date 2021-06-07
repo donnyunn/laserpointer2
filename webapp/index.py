@@ -517,10 +517,11 @@ def recognize_laser(n, vs, target):
     if not ret:
         print("camera error")
         return ret, result
-
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        
+    frameROI = frame[tr[1]:bl[1], bl[0]:tr[0]]
+    hsv = cv2.cvtColor(frameROI, cv2.COLOR_BGR2HSV)
     laser_range = cv2.inRange(hsv, lower_laser, upper_laser)
-    laser = cv2.bitwise_and(frame, frame, mask=laser_range)
+    laser = cv2.bitwise_and(frameROI, frameROI, mask=laser_range)
     ret, thrlaser = cv2.threshold(laser, 1, 255, cv2.THRESH_BINARY)
     rgblaser = cv2.cvtColor(thrlaser, cv2.COLOR_HSV2RGB)
     graylaser = cv2.cvtColor(rgblaser, cv2.COLOR_RGB2GRAY)
@@ -529,37 +530,41 @@ def recognize_laser(n, vs, target):
     ret = False
     for cont in contours:
         approx = cv2.approxPolyDP(cont, cv2.arcLength(cont, True) * 0.02, True)
-        if len(approx) > 5:
+        if len(approx) > 4:
             area = cv2.contourArea(cont)
             if area != 0:
                 _, radius = cv2.minEnclosingCircle(cont)
                 # if radius > 5 and radius < 30:
                 if radius > 1.8 and radius < 5:
                     ratio = radius * radius * math.pi / area
-                    if ratio < 4:
+                    print("radius(%f)"%radius)
+                    print("ratio(%f)"%ratio)
+                    if ratio < 9:
                         (x, y, w, h) = cv2.boundingRect(cont)
-                        result = (int((x+x+w)/2), int((y+y+h)/2))
-                        if result[0] > bl[0]-10 and result[0] < tr[0]+10 and result[1] > tr[1]-10 and result[1] < bl[1]+10:
-                        # if True:
+                        # result = (int((x+x+w)/2), int((y+y+h)/2))
+                        # if result[0] > bl[0]-10 and result[0] < tr[0]+10 and result[1] > tr[1]-10 and result[1] < bl[1]+10:
+                        if True:
                             # print("radius(%f)"%radius)
                             # print("ratio(%f)"%ratio)
-                            result = (int((x+x+w)/2), int((y+y+h)/2))
+                            result = (int((x+x+w)/2)+bl[0], int((y+y+h)/2)+tr[1])
                             ret = True
 
-                            # pt1 = (x-10, y-10)
-                            # pt2 = (x + w+10, y + h + 10)
-                            # cv2.rectangle(laser, pt1, pt2, (0, 0, 255), 1)
+                            pt1 = (x-10, y-10)
+                            pt2 = (x + w+10, y + h + 10)
+                            cv2.rectangle(laser, pt1, pt2, (0, 0, 255), 1)
 
                             break
-                        # else:
-                        #     cv2.circle(laser, result, 5, (0, 0, 255), -1)
+                        else:
+                            cv2.circle(laser, result, 5, (0, 0, 255), -1)
 
     # pt1 = (tr[0], tr[1])
     # pt2 = (bl[0], bl[1])
-    # cv2.rectangle(laser, pt1, pt2, (0, 255, 0), 2)
-    # cv2.circle(laser, center, 1, (255, 255, 255), -1)
-    # cv2.circle(laser, result, 1, (0, 0, 255), -1)
-    # cv2.circle(laser, target, 3, (0, 255, 255), -1)
+    pt1 = (0, tr[0]-bl[0])
+    pt2 = (0, bl[1]-tr[1])
+    cv2.rectangle(laser, pt1, pt2, (0, 255, 0), 2)
+    cv2.circle(laser, (center[0]-bl[0], center[1]-tr[1]), 1, (255, 255, 255), -1)
+    cv2.circle(laser, (result[0]-bl[0], result[1]-tr[1]), 1, (0, 0, 255), -1)
+    cv2.circle(laser, (target[0]-bl[0], target[1]-tr[1]), 3, (0, 255, 255), -1)
     # cv2.imshow("Frame", laser)
 
     # ret_, frame = vs.read()
