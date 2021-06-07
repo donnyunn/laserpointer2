@@ -22,7 +22,7 @@ def power_off():
 
 def power_reset():
     power_off()
-    time.sleep(0.5)
+    time.sleep(1)
     power_on()
 
 def laser_on(num):

@@ -26,9 +26,9 @@ coord = {
     'movex1':0, 'movey1':0,
     'movex2':0, 'movey2':0,
     'movex3':0, 'movey3':0,
-    'offsetx1':60, 'offsety1':265,
-    'offsetx2':180, 'offsety2':155,
-    'offsetx3':-130, 'offsety3':0,
+    'offsetx1':-30, 'offsety1':210,
+    'offsetx2':0, 'offsety2':230,
+    'offsetx3':130, 'offsety3':260,
     'laser1':19952,
     'laser2':19952,
     'laser3':19952,
@@ -78,7 +78,7 @@ def hwreset():
     correction_flag = False
     ard.power_reset()
     time.sleep(1)
-    correction_flag = True
+    # correction_flag = True
     initialization()
     return redirect(url_for('index'))
 
@@ -440,9 +440,9 @@ def initialization():
     ard.laser_offset(1, coord['offsetx2'], coord['offsety2'])
     ard.laser_offset(2, coord['offsetx3'], coord['offsety3'])
 
-    time.sleep(1)
+    # time.sleep(1)
     # correction_flag = True
-    correct(((0,0),(0,0),(0,0)))
+    # correct(((0,0),(0,0),(0,0)))
 
     t = threading.Thread(target=threadMotorLaserOff)
     t.start()
@@ -497,14 +497,25 @@ def recognize_laser(n, vs, target):
     upper_laser = np.array([90, 255, 255])
 
     ard.laser_on(n)
+    time.sleep(0.1)    
     ret, frame = vs.read()
-    # ard.laser_off(n)
     if not ret:
-        # ard.laser_off(n)
+        print("camera error")
         return ret, result
     
     ret, frame = vs.read()
     if not ret:
+        print("camera error")
+        return ret, result
+    
+    ret, frame = vs.read()
+    if not ret:
+        print("camera error")
+        return ret, result
+    
+    ret, frame = vs.read()
+    if not ret:
+        print("camera error")
         return ret, result
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -522,16 +533,17 @@ def recognize_laser(n, vs, target):
             area = cv2.contourArea(cont)
             if area != 0:
                 _, radius = cv2.minEnclosingCircle(cont)
+                # if radius > 5 and radius < 30:
                 if radius > 1.8 and radius < 5:
                     ratio = radius * radius * math.pi / area
-                    if int(ratio) < 3:
+                    if ratio < 4:
                         (x, y, w, h) = cv2.boundingRect(cont)
                         result = (int((x+x+w)/2), int((y+y+h)/2))
                         if result[0] > bl[0]-10 and result[0] < tr[0]+10 and result[1] > tr[1]-10 and result[1] < bl[1]+10:
+                        # if True:
                             # print("radius(%f)"%radius)
                             # print("ratio(%f)"%ratio)
-                            # print(radius, ratio)
-                            # result = (int((x+x+w)/2), int((y+y+h)/2))
+                            result = (int((x+x+w)/2), int((y+y+h)/2))
                             ret = True
 
                             # pt1 = (x-10, y-10)
@@ -539,6 +551,9 @@ def recognize_laser(n, vs, target):
                             # cv2.rectangle(laser, pt1, pt2, (0, 0, 255), 1)
 
                             break
+                        # else:
+                        #     cv2.circle(laser, result, 5, (0, 0, 255), -1)
+
     # pt1 = (tr[0], tr[1])
     # pt2 = (bl[0], bl[1])
     # cv2.rectangle(laser, pt1, pt2, (0, 255, 0), 2)
@@ -546,14 +561,17 @@ def recognize_laser(n, vs, target):
     # cv2.circle(laser, result, 1, (0, 0, 255), -1)
     # cv2.circle(laser, target, 3, (0, 255, 255), -1)
     # cv2.imshow("Frame", laser)
-    ret, frame = vs.read()
-    if not ret:
-        return ret, result
+
+    # ret_, frame = vs.read()
+    # if not ret_:
+    #     return ret_, result
 
     return ret, result
 
 def correct(laser_req):
     global correction_flag
+    if correction_flag is False:
+        return
     # print(laser_req)
     # return
     ard.laser_off(0)
@@ -565,84 +583,66 @@ def correct(laser_req):
     laser = (0, 0)
 
     for n in range(3):
-        time.sleep(1)
+        ard.motor_on(n)
+        time.sleep(0.5)
         retry = 0
         xtick = 1
         ytick = 1
-        xok = False
-        yok = False
         target = itfCoord(laser_req[n], tr, bl, center)
-        while correction_flag:
-            # ret, frame = vs.read()
-            # if not ret:
-            #     print(ret)
-            #     break
-            # ard.laser_move(n, laser_req[n][0], laser_req[n][1])
-            # time.sleep(1)
-            
+        while correction_flag:            
             ret, laser = recognize_laser(n, vs, target)
             if ret:
-                retry = 0
-                # x, y = tfCoord(laser, tr, bl, center)
-                # print(ret, n)
-                # print("required: (%d"%laser_req[n][0]+", %d"%laser_req[n][1]+")")
-                # print("corrected: (%d"%x+", %d"%y+")")
-                # x_err = int((laser_req[n][0]-x))
-                # y_err = int((laser_req[n][1]-y))
+                retry = retry + 1
                 x_err = int(target[0] - laser[0])
                 y_err = int(target[1] - laser[1])
                 print(target)
                 print(laser)
                 print(x_err, y_err)
-                
-                if xok and yok:
-                    # print("required: (%d"%laser_req[n][0]+", %d"%laser_req[n][1]+")")
-                    # print("corrected: (%d"%x+", %d"%y+")")
-                    break
-                elif xok:
-                    if abs(y_err) < 4:
-                        if abs(x_err) >= 4:
-                            xok = False
-                        yok = True
-                    elif abs(y_err) > 25:
-                        if y_err > 0:
-                            ytick = -2
-                        else:
-                            ytick = 2
-                        ard.laser_tick(n, 0, ytick)  
-                    else:
-                        if y_err > 0:
-                            ytick = -1
-                        else:
-                            ytick = 1
-                        ard.laser_tick(n, 0, ytick)  
+
+                if abs(x_err) > 150 or abs(y_err) > 150:
+                    print("too far")
+                    laser = (0, 0)
+                    retry = retry + 1
                 else:
-                    if abs(x_err) < 4:
-                        if abs(y_err) >= 4:
-                            yok = False
-                        xok = True
-                    elif abs(x_err) > 25:
-                        if x_err < 0:
-                            xtick = -2
-                        else:
-                            xtick = 2
-                        ard.laser_tick(n, xtick, 0)
+                    if abs(x_err) < 3 and abs(y_err) < 3:
+                        print("corrected (%d)"%n)
+                        break;
                     else:
-                        if x_err < 0:
-                            xtick = -1
+                        if abs(x_err) >= 10:
+                            if x_err < 0:
+                                xtick = -3
+                            else:
+                                xtick = 3
+                        elif abs(x_err) >= 3:
+                            if x_err < 0:
+                                xtick = -1
+                            else:
+                                xtick = 1
                         else:
-                            xtick = 1
-                        ard.laser_tick(n, xtick, 0)
+                            xtick = 0
+                        if abs(y_err) >= 10:
+                            if y_err < 0:
+                                ytick = 3
+                            else:
+                                ytick = -3
+                        elif abs(y_err) >= 3:
+                            if y_err < 0:
+                                ytick = 1
+                            else:
+                                ytick = -1
+                        else:
+                            ytick = 0
+                    ard.laser_tick(n, xtick, ytick)
 
             else:
                 laser = (0, 0)
                 retry = retry + 1
-                x, y = (0, 0)
+                # x, y = (0, 0)
                 print(".")
-                if retry > 20:
-                    print("fail(%d)"%n)
-                    retry = 0
-                    break;
+            if retry > 15:
+                print("fail(%d)"%n)
+                retry = 0
+                break;
             if cv2.waitKey(1) == 27:
                 break
         ard.laser_off(n)
